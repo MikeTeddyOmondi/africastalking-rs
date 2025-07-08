@@ -1,4 +1,4 @@
-/// Main client implementation for the AfricasTalking SDK
+//! Main client implementation for the AfricasTalking SDK
 
 use crate::{
     config::Config,
@@ -167,7 +167,7 @@ impl AfricasTalkingClient {
             }
             
             return Err(AfricasTalkingError::api_error(
-                format!("HTTP {}: {}", status, response_text),
+                format!("HTTP {status}: {response_text}"),
                 status.to_string(),
                 None,
             ));
@@ -175,7 +175,7 @@ impl AfricasTalkingClient {
         
         // Parse successful response
         serde_json::from_str::<R>(&response_text).map_err(|e| {
-            eprintln!("Failed to parse response: {}", response_text);
+            eprintln!("Failed to parse response: {response_text}");
             AfricasTalkingError::Serialization(e)
         })
     }

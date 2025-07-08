@@ -1,4 +1,5 @@
-/// Configuration management for the AfricasTalking SDK
+//! Configuration management for the AfricasTalking SDK
+
 use crate::error::{AfricasTalkingError, Result};
 use serde::{Deserialize, Serialize};
 use std::time::Duration;

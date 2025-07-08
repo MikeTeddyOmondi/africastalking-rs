@@ -1,4 +1,4 @@
-/// Common types used across the SDK
+//! Common types used across the SDK
 
 use serde::{Deserialize, Serialize};
 

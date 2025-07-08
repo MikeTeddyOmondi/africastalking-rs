@@ -1,0 +1,73 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*.*.*"]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test_and_lint:
+    name: Test and Lint Crate
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v3
+
+      - name: Set up Rust toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          override: true
+
+      - name: Install dependencies (fetch crates)
+        run: cargo fetch
+
+      - name: Run Clippy
+        run: |
+          cargo clippy --all-targets --all-features -- -D warnings
+
+      - name: Run Tests
+        run: cargo test --all-features
+
+  docker_publish:
+    runs-on: ubuntu-latest
+    needs: test_and_lint
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v3
+
+      - name: Build & Push Docker Image
+        uses: mr-smithers-excellent/docker-build-push@v6
+        with:
+          image: ranckosolutionsinc/africastalking-rs-docs
+          tags: latest
+          registry: docker.io
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+          # Build context is the `docs` folder
+          directory: docs
+          # If your Dockerfile is named something other than Dockerfile or in a different location,
+          # specify "dockerfile: docs/Dockerfile", e.g.:
+          # dockerfile: docs/Dockerfile        
+
+  publish:
+    name: Publish to crates.io
+    needs: test_and_lint
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          override: true
+
+      - name: Publish to crates.io
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ secrets.CRATES_IO_TOKEN }}
+        run: cargo publish

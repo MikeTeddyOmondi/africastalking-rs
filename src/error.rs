@@ -1,4 +1,5 @@
-/// Error handling for the AfricasTalking SDK
+//! Error handling for the AfricasTalking SDK
+
 use serde::{Deserialize, Serialize};
 
 /// Main error type for the AfricasTalking SDK

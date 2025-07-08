@@ -1,6 +1,6 @@
-/// SMS module implementation
+//! SMS module implementation
 
-use crate::{client::AfricasTalkingClient, error::Result, PhoneNumber};
+use crate::{client::AfricasTalkingClient, error::Result};
 use serde::{Deserialize, Serialize};
 
 /// SMS module for sending and managing SMS messages
@@ -13,20 +13,23 @@ impl SmsModule {
     pub(crate) fn new(client: AfricasTalkingClient) -> Self {
         Self { client }
     }
-    
+
     /// Send SMS to one or more recipients
     pub async fn send(&self, request: SendSmsRequest) -> Result<SendSmsResponse> {
         self.client.post("/version1/messaging", &request).await
     }
-    
+
     /// Fetch SMS messages
-    pub async fn fetch_messages(&self, last_received_id: Option<u32>) -> Result<FetchMessagesResponse> {
+    pub async fn fetch_messages(
+        &self,
+        last_received_id: Option<u32>,
+    ) -> Result<FetchMessagesResponse> {
         let endpoint = if let Some(id) = last_received_id {
-            format!("/version1/messaging?lastReceivedId={}", id)
+            format!("/version1/messaging?lastReceivedId={id}")
         } else {
             "/version1/messaging".to_string()
         };
-        
+
         self.client.get(&endpoint).await
     }
 }
@@ -63,12 +66,12 @@ impl SendSmsRequest {
             retry_duration_in_hours: None,
         }
     }
-    
+
     pub fn from<S: Into<String>>(mut self, from: S) -> Self {
         self.from = Some(from.into());
         self
     }
-    
+
     pub fn bulk_mode(mut self, enabled: bool) -> Self {
         self.bulk_sms_mode = Some(if enabled { 1 } else { 0 });
         self

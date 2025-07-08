@@ -2,7 +2,7 @@
 //! Application module implementation
 
 use crate::{client::AfricasTalkingClient, error::Result};
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 
 /// Application module for getting app data
 #[derive(Debug, Clone)]
@@ -14,7 +14,7 @@ impl ApplicationModule {
     pub(crate) fn new(client: AfricasTalkingClient) -> Self {
         Self { client }
     }
-    
+
     /// Get application data
     pub async fn get_data(&self) -> Result<ApplicationDataResponse> {
         self.client.get("/version1/user").await
