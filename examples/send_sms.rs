@@ -23,9 +23,9 @@ async fn main() -> Result<()> {
 
     // send sms
     let request = SendSmsRequest {
-        to: vec!["+254717135176".to_string()],
+        to: "254717135176".to_string(), // vec!["254717135176".to_string()].join(","),
         message: "Hello, AfricasTalking!".to_string(),
-        from: Some(username),
+        from: None,
         bulk_sms_mode: None,
         enqueue: None,
         keyword: None,

@@ -114,7 +114,7 @@ impl AfricasTalkingClient {
     where
         T: Serialize,
     {
-        let url = format!("{}{}?senderId={}", self.config.environment.base_url(), endpoint, self.config.username);
+        let url = format!("{}{}", self.config.environment.base_url(), endpoint);
         let mut request = self.http_client.request(method.clone(), &url);
         
         // Add username to all requests

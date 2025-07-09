@@ -36,14 +36,16 @@ impl SmsModule {
 
 #[derive(Debug, Serialize)]
 pub struct SendSmsRequest {
-    pub to: Vec<String>,
+    pub to: String,
     pub message: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub from: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     #[serde(rename = "bulkSMSMode")]
     pub bulk_sms_mode: Option<u32>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub enqueue: Option<u32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub keyword: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     #[serde(rename = "linkId")]
