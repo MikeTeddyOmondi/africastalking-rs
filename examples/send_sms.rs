@@ -17,7 +17,6 @@ async fn main() -> Result<()> {
     let config = Config::new(api_key, username.clone()).environment(Environment::Sandbox);
 
     let client = AfricasTalkingClient::new(config).unwrap();
-    println!("{client:#?}");
 
     let sms = client.sms();
 
@@ -32,8 +31,6 @@ async fn main() -> Result<()> {
         link_id: None,
         retry_duration_in_hours: None,
     };
-    let json_str = serde_json::to_string(&request).unwrap();
-    println!("{json_str:#?}");
 
     let send_sms_response = sms.send(request).await?;
     println!("{send_sms_response:#?}");
