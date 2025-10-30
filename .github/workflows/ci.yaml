@@ -50,7 +50,7 @@ jobs:
           directory: docs
           # If your Dockerfile is named something other than Dockerfile or in a different location,
           # specify "dockerfile: docs/Dockerfile", e.g.:
-          # dockerfile: docs/Dockerfile        
+          dockerfile: docs/Dockerfile        
 
   publish:
     name: Publish to crates.io
