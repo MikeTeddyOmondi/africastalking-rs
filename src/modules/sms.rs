@@ -4,19 +4,53 @@ use crate::{client::AfricasTalkingClient, error::Result};
 use serde::{Deserialize, Serialize};
 
 /// SMS module for sending and managing SMS messages
+/// Uses RefCell to allow changing the AfricasTalkingClient instance used by the SmsModule.
 #[derive(Debug, Clone)]
 pub struct SmsModule {
-    client: AfricasTalkingClient,
+    pub client: std::cell::RefCell<AfricasTalkingClient>,
 }
 
 impl SmsModule {
     pub(crate) fn new(client: AfricasTalkingClient) -> Self {
-        Self { client }
+        Self {
+            client: std::cell::RefCell::new(client),
+        }
+    }
+
+    /**
+     * Change the AfricasTalkingClient instance used by the SmsModule to one with different configs.
+     * @param client - The new AfricasTalkingClient instance.
+     */
+    pub fn set_client(self, client: AfricasTalkingClient) {
+        *self.client.borrow_mut() = client;
     }
 
     /// Send SMS to one or more recipients
     pub async fn send(&self, request: SendSmsRequest) -> Result<SendSmsResponse> {
-        self.client.post("/version1/messaging", &request).await
+        // self.client.post(.await
+        self.client
+            .borrow()
+            .post("/version1/messaging", &request)
+            .await
+    }
+
+    pub async fn send_bulk_mordern(
+        &self,
+        message: String,
+        phone_numbers: Vec<String>,
+    ) -> Result<SendSmsResponse> {
+        let request = MordernBulkSmsRequest {
+            username: self.client.borrow().config.username.clone(),
+            message,
+            sender_id: self.client.borrow().config.sms_short_code.clone(),
+            recipients: phone_numbers,
+        };
+
+        // *self.client.borrow_mut() = AfricasTalkingClient::new_content_type_json(None)?;
+        self.client
+            .borrow()
+            .post("/version1/messaging/bulk", &request)
+            .await
     }
 
     /// Fetch SMS messages
@@ -30,7 +64,7 @@ impl SmsModule {
             "/version1/messaging".to_string()
         };
 
-        self.client.get(&endpoint).await
+        self.client.borrow().get(&endpoint).await
     }
 }
 
@@ -87,7 +121,7 @@ pub struct SendSmsResponse {
 }
 
 #[derive(Debug, Deserialize)]
-pub struct SmsMessageData {
+pub struct  SmsMessageData {
     #[serde(rename = "Message")]
     pub message: String,
     #[serde(rename = "Recipients")]
@@ -134,4 +168,22 @@ pub struct SmsMessage {
     pub date: String,
     #[serde(rename = "linkId")]
     pub link_id: Option<String>,
+}
+
+/**
+ * Mordern Bulk SMS Request Structure.
+ * Used for sending bulk SMS messages with content type json as opposed to form data.  
+ * @param username - The AfricasTalking username.
+ * @param message - The SMS message content.
+ * @param sender_id - Your registered short code or alphanumeric
+ * @param recipients - A list of recipient phone numbers.
+ */
+#[derive(Debug, Serialize)]
+pub struct MordernBulkSmsRequest {
+    pub username: String,
+    pub message: String,
+    #[serde(rename = "senderId")]
+    pub sender_id: String,
+    #[serde(rename = "phoneNumbers")]
+    pub recipients: Vec<String>,
 }

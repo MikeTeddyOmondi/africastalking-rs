@@ -30,6 +30,8 @@ pub struct Config {
     pub api_key: String,
     /// Username for the application
     pub username: String,
+    // Your registered short code or alphanumeric
+    pub sms_short_code: String,
     /// Environment (sandbox or production)
     pub environment: Environment,
     /// Request timeout duration
@@ -38,11 +40,12 @@ pub struct Config {
     pub max_retries: u32,
     /// Custom user agent string
     pub user_agent: Option<String>,
+
 }
 
 impl Config {
     /// Create a new configuration
-    pub fn new<S: Into<String>>(api_key: S, username: S) -> Self {
+    pub fn new<S: Into<String>>(api_key: S, username: S, sms_short_code: S) -> Self {
         Self {
             api_key: api_key.into(),
             username: username.into(),
@@ -50,6 +53,7 @@ impl Config {
             timeout: Duration::from_secs(30),
             max_retries: 3,
             user_agent: None,
+            sms_short_code: sms_short_code.into(),
         }
     }
 
