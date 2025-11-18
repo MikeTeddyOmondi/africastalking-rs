@@ -1,6 +1,7 @@
 //! Main client implementation for the AfricasTalking SDK
 
 use crate::{
+    Environment,
     config::Config,
     error::{AfricasTalkingError, ApiErrorResponse, Result},
     modules::*,
@@ -17,12 +18,13 @@ use tokio::time::sleep;
 #[derive(Debug, Clone)]
 pub struct AfricasTalkingClient {
     http_client: HttpClient,
-    config: Config,
+    pub config: Config,
 }
 
 impl AfricasTalkingClient {
     /// Create a new client with the given configuration
-    pub fn new(config: Config) -> Result<Self> {
+    pub fn new() -> Result<Self> {
+        let config = Self::at_configs();
         config.validate()?;
 
         let mut headers = HeaderMap::new();
@@ -55,9 +57,9 @@ impl AfricasTalkingClient {
      * @param additional_headers - Optional additional headers to include in requests.
      */
     pub fn new_content_type_json(
-        config: Config,
         additional_headers: Option<Vec<(String, String)>>,
     ) -> Result<Self> {
+        let config = Self::at_configs();
         config.validate()?;
 
         let mut headers = HeaderMap::new();
@@ -223,5 +225,39 @@ impl AfricasTalkingClient {
             eprintln!("Failed to parse response: {response_text}");
             AfricasTalkingError::Serialization(e)
         })
+    }
+
+    /**
+     * Pick up AfricasTalking configs from environment variables.
+     * @return Config - The AfricasTalking configuration.
+     * Public to allow users to log the envs if needed.
+     * Check logs to see what values are being picked/missed
+     */
+    pub fn at_configs() -> Config {
+        dotenvy::dotenv().ok();
+
+        // Now you can read env vars:
+        let api_key = std::env::var("AFRICASTALKING_API_KEY")
+            .map_err(|_| {
+                AfricasTalkingError::Config("AFRICASTALKING_API_KEY config not set".to_string())
+            })
+            .unwrap();
+        let username = std::env::var("AFRICASTALKING_USERNAME")
+            .map_err(|_| {
+                AfricasTalkingError::Config("AFRICASTALKING_USERNAME config not set".to_string())
+            })
+            .unwrap();
+        let sms_short_code = std::env::var("AFRICASTALKING_SMS_SHORT_CODE")
+            .map_err(|_| {
+                AfricasTalkingError::Config(
+                    "AFRICASTALKING_SMS_SHORT_CODE config not set".to_string(),
+                )
+            })
+            .unwrap();
+
+        let config = Config::new(api_key, username.clone(), sms_short_code)
+            .environment(Environment::Sandbox);
+
+        config
     }
 }
