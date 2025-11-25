@@ -18,7 +18,17 @@ impl DataModule {
     where
         M: Serialize,
     {
-        // generate custom headers
+        let headers = self.get_data_request_headers();
+        self.client
+            .post("/mobile/data/request", &request, Some(headers))
+            .await
+    }
+
+    /**
+     * Get headers for data request API.
+     * @return HeaderMap the headers for the request.
+     */
+    fn get_data_request_headers(&self) -> HeaderMap {
         let mut headers = HeaderMap::new();
         headers.insert("Accept", HeaderValue::from_static("application/json"));
         headers.insert(
@@ -26,13 +36,7 @@ impl DataModule {
             HeaderValue::from_str(&self.client.config.api_key).unwrap(),
         );
         headers.insert("Content-Type", HeaderValue::from_static("application/json"));
-
-        // self.client.http_client.default_headers_mut().extend(headers);
-
-        // let payload: Value = serde_json::to_value(&request)?;
-        self.client
-            .post("/mobile/data/request", &request, Some(headers))
-            .await
+        headers
     }
 }
 

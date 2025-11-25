@@ -5,7 +5,10 @@ use crate::{
     error::{AfricasTalkingError, ApiErrorResponse, Result},
     modules::*,
 };
-use reqwest::{Client as HttpClient, Method, Response, header::HeaderMap};
+use reqwest::{
+    Client as HttpClient, Method, Response,
+    header::{HeaderMap, HeaderName},
+};
 use serde::{Serialize, de::DeserializeOwned};
 use std::time::Duration;
 use tokio::time::sleep;
@@ -124,34 +127,67 @@ impl AfricasTalkingClient {
         let url = format!("{}{}", self.config.environment.base_url(), endpoint);
         let mut request = self.http_client.request(method.clone(), &url);
 
+        //check if headers have been submitted.
+        if let Some(headers) = headers {
+            //check if payload has been submitted.
+            if let Some(payload) = payload {
+                // Check if the special header exists
+                if let Some(content_type) = headers.get("Content-Type") {
+                    if content_type.to_str().unwrap_or("") == "application/x-www-form-urlencoded" {
+                        // Use form data
+                        let form_data = self.construct_form_data(Some(payload));
+                        request = request.form(&form_data);
+                    } else {
+                        // Use JSON body
+                        request = request.json(payload);
+                    }
+                } else {
+                    // set json body to the request
+                    request = request.json(payload);
+                }
+            }
+
+            // "application/x-www-form-urlencoded"
+
+            // finally add all headers to the request
+            request = request.headers(headers);
+        }
+
+        let response = request.send().await?;
+        Ok(response)
+    }
+
+    /**
+     * Construct form data for the request/payload.
+     * @param payload The payload to include in the form data.
+     * @return Vec<(String, String)> The constructed form data.
+     */
+    fn construct_form_data<T>(&self, payload: Option<&T>) -> Vec<(String, String)>
+    where
+        T: Serialize,
+    {
         // Add username to all requests
-        let mut form_data = vec![("username".to_string(), self.config.username.clone())];
+        let mut form_data: Vec<(String, String)> =
+            vec![("username".to_string(), self.config.username.clone())];
 
         if let Some(payload) = payload {
             // Convert payload to form data
-            let payload_str = serde_json::to_string(payload)?;
+            let payload_str = serde_json::to_string(payload).unwrap();
             let payload_map: std::collections::HashMap<String, serde_json::Value> =
-                serde_json::from_str(&payload_str)?;
+                serde_json::from_str(&payload_str).unwrap();
 
             for (key, value) in payload_map {
                 let value_str = match value {
                     serde_json::Value::String(s) => s,
                     serde_json::Value::Number(n) => n.to_string(),
                     serde_json::Value::Bool(b) => b.to_string(),
-                    _ => serde_json::to_string(&value)?,
+                    _ => serde_json::to_string(&value).unwrap(),
                 };
                 form_data.push((key, value_str));
             }
         }
 
-        if let Some(headers) = headers {
-            request = request.headers(headers);
-        }
-
-        request = request.form(&form_data);
-
-        let response = request.send().await?;
-        Ok(response)
+        form_data
     }
 
     /// Handle the HTTP response
