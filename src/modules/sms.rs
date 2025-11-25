@@ -1,22 +1,28 @@
 //! SMS module implementation
 
 use crate::{client::AfricasTalkingClient, error::Result};
+use reqwest::header::HeaderMap;
 use serde::{Deserialize, Serialize};
 
 /// SMS module for sending and managing SMS messages
 #[derive(Debug, Clone)]
 pub struct SmsModule {
     client: AfricasTalkingClient,
+    headers: HeaderMap,
 }
 
 impl SmsModule {
     pub(crate) fn new(client: AfricasTalkingClient) -> Self {
-        Self { client }
+        let headers = client.get_sms_apis_headers();
+        Self { client, headers }
     }
+    
 
     /// Send SMS to one or more recipients
     pub async fn send(&self, request: SendSmsRequest) -> Result<SendSmsResponse> {
-        self.client.post("/version1/messaging", &request).await
+        self.client
+            .post("/version1/messaging", &request, Some(self.headers.clone()))
+            .await
     }
 
     /// Fetch SMS messages
@@ -30,7 +36,7 @@ impl SmsModule {
             "/version1/messaging".to_string()
         };
 
-        self.client.get(&endpoint).await
+        self.client.get(&endpoint, Some(self.headers.clone())).await
     }
 }
 
