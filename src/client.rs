@@ -5,10 +5,7 @@ use crate::{
     error::{AfricasTalkingError, ApiErrorResponse, Result},
     modules::*,
 };
-use reqwest::{
-    Client as HttpClient, Method, Response,
-    header::{HeaderMap, HeaderName},
-};
+use reqwest::{Client as HttpClient, Method, Response, header::HeaderMap};
 use serde::{Serialize, de::DeserializeOwned};
 use std::time::Duration;
 use tokio::time::sleep;
@@ -44,6 +41,11 @@ impl AfricasTalkingClient {
     /// Get the Airtime module
     pub fn airtime(&self) -> AirtimeModule {
         AirtimeModule::new(self.clone())
+    }
+
+    /// Get the Data module
+    pub fn data(&self) -> DataModule {
+        DataModule::new(self.clone())
     }
 
     /// Get the Application module
@@ -124,7 +126,7 @@ impl AfricasTalkingClient {
     where
         T: Serialize,
     {
-        let url = format!("{}{}", self.config.environment.base_url(), endpoint);
+        let url = self.get_url(endpoint);
         let mut request = self.http_client.request(method.clone(), &url);
 
         //check if headers have been submitted.
@@ -155,6 +157,19 @@ impl AfricasTalkingClient {
 
         let response = request.send().await?;
         Ok(response)
+    }
+
+    /**
+     * Compute the url for the request.
+     * @param endpoint The API endpoint.
+     * @return String The full URL for the request.
+     */
+    fn get_url(&self, endpoint: &str) -> String {
+        if endpoint.contains("mobile/data/request") {
+            let base = self.config.environment.base_url().replace("api", "bundles");
+            return format!("{}{}", base, endpoint);
+        }
+        format!("{}{}", self.config.environment.base_url(), endpoint)
     }
 
     /**

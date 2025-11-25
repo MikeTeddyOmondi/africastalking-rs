@@ -45,7 +45,9 @@ pub struct MobileDataRequest<M>
 where
     M: Serialize,
 {
+    #[serde(rename = "username")]
     pub user_name: String,
+    #[serde(rename = "productName")]
     pub product_name: String,
     pub recipients: Vec<Recipient<M>>,
 }
@@ -55,11 +57,12 @@ pub struct Recipient<M>
 where
     M: Serialize,
 {
+    #[serde(rename = "phoneNumber")]
     pub phone_number: String,
     pub quantity: u32,
     pub unit: String,
-    pub valididty: String,
-    medata: M,
+    pub validity: String,
+    pub metadata: M,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
