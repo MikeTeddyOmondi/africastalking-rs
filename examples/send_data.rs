@@ -27,23 +27,23 @@ async fn main() -> Result<()> {
     let data = client.data();
 
     let receipient_metadata = Metadata {
-        transaction_id: "txn_123456".to_string(),
+        transaction_id: "txn_1234d2232dfsdrwrewr56".to_string(),
     };
 
     let recipient = Recipient {
-        phone_number: "254791725651".to_string(),
-        quantity: 1,
+        phone_number: "+254791725651".to_string(),
+        quantity: 50,
         unit: "MB".to_string(),
         validity: "Day".to_string(),
+        is_promo_bundle: false,
         metadata: receipient_metadata,
     };
     // send sms
     let request = MobileDataRequest {
-        user_name: "123456".to_string(),
-        product_name: "qwert".to_string(),
+        user_name: "rust-sdk".to_string(),
+        product_name: "datatest".to_string(),
         recipients: vec![recipient],
     };
-
     let send_data_response = data.request(request).await?;
     println!("{send_data_response:#?}");
     Ok(())

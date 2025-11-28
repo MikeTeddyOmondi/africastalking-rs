@@ -136,6 +136,7 @@ impl AfricasTalkingClient {
                 // Check if the special header exists
                 if let Some(content_type) = headers.get("Content-Type") {
                     if content_type.to_str().unwrap_or("") == "application/x-www-form-urlencoded" {
+                        
                         // Use form data
                         let form_data = self.construct_form_data(Some(payload));
                         request = request.form(&form_data);

@@ -62,22 +62,36 @@ where
     pub quantity: u32,
     pub unit: String,
     pub validity: String,
+    #[serde(rename = "isPromoBundle")]
+    pub is_promo_bundle: bool,
     pub metadata: M,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct MobileDataResponse {
-    #[serde(rename = "phoneNumber")]
-    pub phone_number: String,
-    pub provider: String,
-    pub status: String,
-    #[serde(rename = "ReciptransactionId")]
-    pub transaction_id: String,
-    pub value: String,
+    #[serde(rename = "errorMessage", skip_serializing_if = "Option::is_none")]
+    error_message: Option<String>,
+
+    #[serde(rename = "phoneNumber", skip_serializing_if = "Option::is_none")]
+    pub phone_number: Option<String>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub provider: Option<String>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub status: Option<String>,
+
+    #[serde(rename = "transactionId", skip_serializing_if = "Option::is_none")]
+    pub transaction_id: Option<String>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub value: Option<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct MobileDataResponseList {
     #[serde(default)]
-    pub responses: Vec<MobileDataResponse>,
+    pub entries: Vec<MobileDataResponse>,
+    #[serde(rename = "errorMessage", skip_serializing_if = "Option::is_none")]
+    pub error_message: Option<String>,
 }
