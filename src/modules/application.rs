@@ -17,7 +17,7 @@ impl ApplicationModule {
 
     /// Get application data
     pub async fn get_data(&self) -> Result<ApplicationDataResponse> {
-        self.client.get("/version1/user", None).await
+        self.client.get("/version1/user").await
     }
 }
 

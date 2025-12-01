@@ -1,11 +1,5 @@
-use africastalking::data::{MobileDataRequest, Recipient};
+use africastalking::data::{MobileDataRequest, Recipient, RecipientMetadata};
 use africastalking::{AfricasTalkingClient, AfricasTalkingError, Config, Environment, Result};
-use serde::Serialize;
-
-#[derive(Debug, Serialize)]
-pub struct Metadata {
-    pub transaction_id: String,
-}
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -26,7 +20,7 @@ async fn main() -> Result<()> {
 
     let data = client.data();
 
-    let receipient_metadata = Metadata {
+    let receipient_metadata = RecipientMetadata {
         transaction_id: "txn_1234d2232dfsdrwrewr56".to_string(),
     };
 
@@ -44,7 +38,7 @@ async fn main() -> Result<()> {
         product_name: "datatest".to_string(),
         recipients: vec![recipient],
     };
-    let send_data_response = data.request(request).await?;
+    let send_data_response = data.send(request).await?;
     println!("{send_data_response:#?}");
     Ok(())
 }

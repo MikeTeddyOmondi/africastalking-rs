@@ -14,14 +14,9 @@ impl DataModule {
     }
 
     /// Send SMS to one or more recipients
-    pub async fn request<M>(&self, request: MobileDataRequest<M>) -> Result<MobileDataResponseList>
-    where
-        M: Serialize,
-    {
-        let headers = self.get_data_request_headers();
-        self.client
-            .post("/mobile/data/request", &request, Some(headers))
-            .await
+    pub async fn send(&self, request: MobileDataRequest) -> Result<MobileDataResponseList> {
+        // let headers = self.get_data_request_headers();
+        self.client.post("/mobile/data/request", &request).await
     }
 
     /**
@@ -41,22 +36,22 @@ impl DataModule {
 }
 
 #[derive(Debug, Serialize)]
-pub struct MobileDataRequest<M>
-where
-    M: Serialize,
-{
+pub struct MobileDataRequest {
     #[serde(rename = "username")]
     pub user_name: String,
     #[serde(rename = "productName")]
     pub product_name: String,
-    pub recipients: Vec<Recipient<M>>,
+    pub recipients: Vec<Recipient>,
 }
 
 #[derive(Debug, Serialize)]
-pub struct Recipient<M>
-where
-    M: Serialize,
-{
+pub struct RecipientMetadata {
+    #[serde(rename = "transactionId")]
+    pub transaction_id: String,
+}
+
+#[derive(Debug, Serialize)]
+pub struct Recipient {
     #[serde(rename = "phoneNumber")]
     pub phone_number: String,
     pub quantity: u32,
@@ -64,7 +59,7 @@ where
     pub validity: String,
     #[serde(rename = "isPromoBundle")]
     pub is_promo_bundle: bool,
-    pub metadata: M,
+    pub metadata: RecipientMetadata,
 }
 
 #[derive(Debug, Serialize, Deserialize)]

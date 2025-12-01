@@ -8,20 +8,18 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Clone)]
 pub struct SmsModule {
     client: AfricasTalkingClient,
-    headers: HeaderMap,
 }
 
 impl SmsModule {
     pub(crate) fn new(client: AfricasTalkingClient) -> Self {
-        let headers = client.get_sms_apis_headers();
-        Self { client, headers }
+        Self { client }
     }
-    
 
     /// Send SMS to one or more recipients
     pub async fn send(&self, request: SendSmsRequest) -> Result<SendSmsResponse> {
+        // let headers = self.get_sms_apis_headers();
         self.client
-            .post("/version1/messaging", &request, Some(self.headers.clone()))
+            .post("/version1/messaging", &request)
             .await
     }
 
@@ -36,7 +34,23 @@ impl SmsModule {
             "/version1/messaging".to_string()
         };
 
-        self.client.get(&endpoint, Some(self.headers.clone())).await
+        // let headers = self.get_sms_apis_headers();
+        self.client.get(&endpoint).await
+    }
+
+    pub fn get_sms_apis_headers(&self) -> HeaderMap {
+        let mut headers = HeaderMap::new();
+        headers.insert("Accept", "application/json".parse().unwrap());
+        headers.insert(
+            "Content-Type",
+            "application/x-www-form-urlencoded".parse().unwrap(),
+        );
+        headers.insert("ApiKey", self.client.config.api_key.parse().unwrap());
+
+        if let Some(user_agent) = self.client.config.user_agent.clone() {
+            headers.insert("User-Agent", user_agent.parse().unwrap());
+        }
+        headers
     }
 }
 

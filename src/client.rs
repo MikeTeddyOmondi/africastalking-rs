@@ -13,8 +13,8 @@ use tokio::time::sleep;
 /// Main client for interacting with the AfricasTalking API
 #[derive(Debug, Clone)]
 pub struct AfricasTalkingClient {
-    pub http_client: HttpClient,
-    pub config: Config,
+    pub(crate) http_client: HttpClient,
+    pub(crate) config: Config,
 }
 
 impl AfricasTalkingClient {
@@ -22,8 +22,21 @@ impl AfricasTalkingClient {
     pub fn new(config: Config) -> Result<Self> {
         config.validate()?;
 
+        let mut headers = HeaderMap::new();
+        headers.insert("Accept", "application/json".parse().unwrap());
+        headers.insert(
+            "Content-Type",
+            "application/x-www-form-urlencoded".parse().unwrap(),
+        );
+        headers.insert("ApiKey", config.api_key.parse().unwrap());
+
+        if let Some(user_agent) = &config.user_agent {
+            headers.insert("User-Agent", user_agent.parse().unwrap());
+        }
+
         let http_client = HttpClient::builder()
             .timeout(config.timeout)
+            .default_headers(headers)
             .build()
             .map_err(AfricasTalkingError::Http)?;
 
@@ -43,7 +56,7 @@ impl AfricasTalkingClient {
         AirtimeModule::new(self.clone())
     }
 
-    /// Get the Data module
+    // Get the Data Module
     pub fn data(&self) -> DataModule {
         DataModule::new(self.clone())
     }
@@ -59,37 +72,24 @@ impl AfricasTalkingClient {
     // pub fn data(&self) -> DataModule { ... }
 
     /// Make a POST request to the API
-    pub(crate) async fn post<T, R>(
-        &self,
-        endpoint: &str,
-        payload: &T,
-        headers: Option<HeaderMap>,
-    ) -> Result<R>
+    pub(crate) async fn post<T, R>(&self, endpoint: &str, payload: &T) -> Result<R>
     where
         T: Serialize,
         R: DeserializeOwned,
     {
-        self.request(Method::POST, endpoint, Some(payload), headers)
-            .await
+        self.request(Method::POST, endpoint, Some(payload)).await
     }
 
     /// Make a GET request to the API
-    pub(crate) async fn get<R>(&self, endpoint: &str, headers: Option<HeaderMap>) -> Result<R>
+    pub(crate) async fn get<R>(&self, endpoint: &str) -> Result<R>
     where
         R: DeserializeOwned,
     {
-        self.request::<(), R>(Method::GET, endpoint, None, headers)
-            .await
+        self.request::<(), R>(Method::GET, endpoint, None).await
     }
 
     /// Make a request with retry logic
-    async fn request<T, R>(
-        &self,
-        method: Method,
-        endpoint: &str,
-        payload: Option<&T>,
-        headers: Option<HeaderMap>,
-    ) -> Result<R>
+    async fn request<T, R>(&self, method: Method, endpoint: &str, payload: Option<&T>) -> Result<R>
     where
         T: Serialize,
         R: DeserializeOwned,
@@ -100,10 +100,7 @@ impl AfricasTalkingClient {
         loop {
             attempts += 1;
 
-            match self
-                .make_request(&method, endpoint, payload, headers.clone())
-                .await
-            {
+            match self.make_request(&method, endpoint, payload).await {
                 Ok(response) => return self.handle_response(response).await,
                 Err(e) if attempts < max_attempts && e.is_retryable() => {
                     let delay = Duration::from_millis(1000 * attempts as u64);
@@ -121,89 +118,38 @@ impl AfricasTalkingClient {
         method: &Method,
         endpoint: &str,
         payload: Option<&T>,
-        headers: Option<HeaderMap>,
     ) -> Result<Response>
     where
         T: Serialize,
     {
-        let url = self.get_url(endpoint);
+        let url = format!("{}{}", self.config.environment.base_url(), endpoint);
+        println!("Url {}", url);
         let mut request = self.http_client.request(method.clone(), &url);
 
-        //check if headers have been submitted.
-        if let Some(headers) = headers {
-            //check if payload has been submitted.
-            if let Some(payload) = payload {
-                // Check if the special header exists
-                if let Some(content_type) = headers.get("Content-Type") {
-                    if content_type.to_str().unwrap_or("") == "application/x-www-form-urlencoded" {
-                        
-                        // Use form data
-                        let form_data = self.construct_form_data(Some(payload));
-                        request = request.form(&form_data);
-                    } else {
-                        // Use JSON body
-                        request = request.json(payload);
-                    }
-                } else {
-                    // set json body to the request
-                    request = request.json(payload);
-                }
-            }
-
-            // "application/x-www-form-urlencoded"
-
-            // finally add all headers to the request
-            request = request.headers(headers);
-        }
-
-        let response = request.send().await?;
-        Ok(response)
-    }
-
-    /**
-     * Compute the url for the request.
-     * @param endpoint The API endpoint.
-     * @return String The full URL for the request.
-     */
-    fn get_url(&self, endpoint: &str) -> String {
-        if endpoint.contains("mobile/data/request") {
-            let base = self.config.environment.base_url().replace("api", "bundles");
-            return format!("{}{}", base, endpoint);
-        }
-        format!("{}{}", self.config.environment.base_url(), endpoint)
-    }
-
-    /**
-     * Construct form data for the request/payload.
-     * @param payload The payload to include in the form data.
-     * @return Vec<(String, String)> The constructed form data.
-     */
-    fn construct_form_data<T>(&self, payload: Option<&T>) -> Vec<(String, String)>
-    where
-        T: Serialize,
-    {
         // Add username to all requests
-        let mut form_data: Vec<(String, String)> =
-            vec![("username".to_string(), self.config.username.clone())];
+        let mut form_data = vec![("username".to_string(), self.config.username.clone())];
 
         if let Some(payload) = payload {
             // Convert payload to form data
-            let payload_str = serde_json::to_string(payload).unwrap();
+            let payload_str = serde_json::to_string(payload)?;
             let payload_map: std::collections::HashMap<String, serde_json::Value> =
-                serde_json::from_str(&payload_str).unwrap();
+                serde_json::from_str(&payload_str)?;
 
             for (key, value) in payload_map {
                 let value_str = match value {
                     serde_json::Value::String(s) => s,
                     serde_json::Value::Number(n) => n.to_string(),
                     serde_json::Value::Bool(b) => b.to_string(),
-                    _ => serde_json::to_string(&value).unwrap(),
+                    _ => serde_json::to_string(&value)?,
                 };
                 form_data.push((key, value_str));
             }
         }
 
-        form_data
+        request = request.form(&form_data);
+
+        let response = request.send().await?;
+        Ok(response)
     }
 
     /// Handle the HTTP response
@@ -243,20 +189,5 @@ impl AfricasTalkingClient {
             eprintln!("Failed to parse response: {response_text}");
             AfricasTalkingError::Serialization(e)
         })
-    }
-
-    pub fn get_sms_apis_headers(&self) -> HeaderMap {
-        let mut headers = HeaderMap::new();
-        headers.insert("Accept", "application/json".parse().unwrap());
-        headers.insert(
-            "Content-Type",
-            "application/x-www-form-urlencoded".parse().unwrap(),
-        );
-        headers.insert("ApiKey", self.config.api_key.parse().unwrap());
-
-        if let Some(user_agent) = self.config.user_agent.clone() {
-            headers.insert("User-Agent", user_agent.parse().unwrap());
-        }
-        headers
     }
 }

@@ -17,7 +17,7 @@ impl AirtimeModule {
     
     /// Send airtime to recipients
     pub async fn send(&self, request: SendAirtimeRequest) -> Result<SendAirtimeResponse> {
-        self.client.post("/version1/airtime/send", &request, None).await
+        self.client.post("/version1/airtime/send", &request).await
     }
 }
 
