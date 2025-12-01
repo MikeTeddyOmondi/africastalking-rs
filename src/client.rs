@@ -122,9 +122,12 @@ impl AfricasTalkingClient {
     where
         T: Serialize,
     {
-        let url = format!("{}{}", self.config.environment.base_url(), endpoint);
+        let url = self.get_url(endpoint);
         println!("Url {}", url);
         let mut request = self.http_client.request(method.clone(), &url);
+
+        // I cant get the headers from here.
+        // let x =self.http_client.headers();
 
         // Add username to all requests
         let mut form_data = vec![("username".to_string(), self.config.username.clone())];
@@ -151,6 +154,7 @@ impl AfricasTalkingClient {
         let response = request.send().await?;
         Ok(response)
     }
+
 
     /// Handle the HTTP response
     async fn handle_response<R>(&self, response: Response) -> Result<R>
@@ -189,5 +193,18 @@ impl AfricasTalkingClient {
             eprintln!("Failed to parse response: {response_text}");
             AfricasTalkingError::Serialization(e)
         })
+    }
+
+    /**
+     * Compute the url for the request.
+     * @param endpoint The API endpoint.
+     * @return String The full URL for the request.
+     */
+    fn get_url(&self, endpoint: &str) -> String {
+        if endpoint.contains("mobile/data/request") {
+            let base = self.config.environment.base_url().replace("api", "bundles");
+            return format!("{}{}", base, endpoint);
+        }
+        format!("{}{}", self.config.environment.base_url(), endpoint)
     }
 }
