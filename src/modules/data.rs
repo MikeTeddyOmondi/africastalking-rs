@@ -50,13 +50,28 @@ pub struct RecipientMetadata {
     pub transaction_id: String,
 }
 
+// The available data validity classes.
+#[derive(Debug, Serialize, Deserialize)]
+pub enum DataValidity {
+    Day,
+    Week,
+    Month,
+}
+
+// The avaibale data packages/units.
+#[derive(Debug, Serialize, Deserialize)]
+pub enum DataUnits {
+    MB,
+    GB,
+}
+
 #[derive(Debug, Serialize)]
 pub struct Recipient {
     #[serde(rename = "phoneNumber")]
     pub phone_number: String,
     pub quantity: u32,
-    pub unit: String,
-    pub validity: String,
+    pub unit: DataUnits,
+    pub validity: DataValidity,
     #[serde(rename = "isPromoBundle")]
     pub is_promo_bundle: bool,
     pub metadata: RecipientMetadata,

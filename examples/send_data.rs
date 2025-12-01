@@ -1,4 +1,6 @@
-use africastalking::data::{MobileDataRequest, Recipient, RecipientMetadata};
+use africastalking::data::{
+    DataUnits, DataValidity, MobileDataRequest, Recipient, RecipientMetadata,
+};
 use africastalking::{AfricasTalkingClient, AfricasTalkingError, Config, Environment, Result};
 
 #[tokio::main]
@@ -27,8 +29,8 @@ async fn main() -> Result<()> {
     let recipient = Recipient {
         phone_number: "+254791725651".to_string(),
         quantity: 50,
-        unit: "MB".to_string(),
-        validity: "Day".to_string(),
+        unit: DataUnits::MB,
+        validity: DataValidity::Day,
         is_promo_bundle: false,
         metadata: receipient_metadata,
     };
