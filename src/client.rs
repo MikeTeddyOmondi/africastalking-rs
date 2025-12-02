@@ -5,7 +5,8 @@ use crate::{
     error::{AfricasTalkingError, ApiErrorResponse, Result},
     modules::*,
 };
-use reqwest::{header::HeaderMap, Client as HttpClient, Method, Response};
+use reqwest::{Client as HttpClient, Method, Response};
+use reqwest::header::HeaderMap;
 use serde::{de::DeserializeOwned, Serialize};
 use std::time::Duration;
 use tokio::time::sleep;
@@ -24,7 +25,6 @@ impl AfricasTalkingClient {
         
         let mut headers = HeaderMap::new();
         headers.insert("Accept", "application/json".parse().unwrap());
-        headers.insert("Content-Type", "application/x-www-form-urlencoded".parse().unwrap());
         headers.insert("ApiKey", config.api_key.parse().unwrap());
         
         if let Some(user_agent) = &config.user_agent {
@@ -63,13 +63,22 @@ impl AfricasTalkingClient {
     // pub fn payments(&self) -> PaymentsModule { ... }
     // pub fn data(&self) -> DataModule { ... }
     
-    /// Make a POST request to the API
+    /// Make a POST request with form encoding (default for most endpoints)
     pub(crate) async fn post<T, R>(&self, endpoint: &str, payload: &T) -> Result<R>
     where
         T: Serialize,
         R: DeserializeOwned,
     {
-        self.request(Method::POST, endpoint, Some(payload)).await
+        self.request_with(Method::POST, endpoint, Some(payload), false).await
+    }
+
+    /// Make a POST request with JSON encoding
+    pub(crate) async fn post_json<T, R>(&self, endpoint: &str, payload: &T) -> Result<R>
+    where
+        T: Serialize,
+        R: DeserializeOwned,
+    {
+        self.request_with(Method::POST, endpoint, Some(payload), true).await
     }
     
     /// Make a GET request to the API
@@ -77,11 +86,11 @@ impl AfricasTalkingClient {
     where
         R: DeserializeOwned,
     {
-        self.request::<(), R>(Method::GET, endpoint, None).await
+        self.request_with::<(), R>(Method::GET, endpoint, None, false).await
     }
     
     /// Make a request with retry logic
-    async fn request<T, R>(&self, method: Method, endpoint: &str, payload: Option<&T>) -> Result<R>
+    async fn request_with<T, R>(&self, method: Method, endpoint: &str, payload: Option<&T>, use_json: bool) -> Result<R>
     where
         T: Serialize,
         R: DeserializeOwned,
@@ -92,7 +101,7 @@ impl AfricasTalkingClient {
         loop {
             attempts += 1;
             
-            match self.make_request(&method, endpoint, payload).await {
+            match self.make_request_with(&method, endpoint, payload, use_json).await {
                 Ok(response) => return self.handle_response(response).await,
                 Err(e) if attempts < max_attempts && e.is_retryable() => {
                     let delay = Duration::from_millis(1000 * attempts as u64);
@@ -105,42 +114,54 @@ impl AfricasTalkingClient {
     }
     
     /// Make a single HTTP request
-    async fn make_request<T>(
+    async fn make_request_with<T>(
         &self,
         method: &Method,
         endpoint: &str,
         payload: Option<&T>,
+        use_json: bool,
     ) -> Result<Response>
     where
         T: Serialize,
     {
-        let url = format!("{}{}", self.config.environment.base_url(), endpoint);
+        let url = self.get_url(endpoint);
         let mut request = self.http_client.request(method.clone(), &url);
-        
-        // Add username to all requests
-        let mut form_data = vec![("username".to_string(), self.config.username.clone())];
-        
-        if let Some(payload) = payload {
-            // Convert payload to form data
-            let payload_str = serde_json::to_string(payload)?;
-            let payload_map: std::collections::HashMap<String, serde_json::Value> = 
-                serde_json::from_str(&payload_str)?;
-            
-            for (key, value) in payload_map {
-                let value_str = match value {
-                    serde_json::Value::String(s) => s,
-                    serde_json::Value::Number(n) => n.to_string(),
-                    serde_json::Value::Bool(b) => b.to_string(),
-                    _ => serde_json::to_string(&value)?,
-                };
-                form_data.push((key, value_str));
+
+        if use_json {
+            if let Some(payload) = payload {
+                request = request.json(payload);
             }
+        } else {
+            // Add username to all form-encoded requests
+            let mut form_data = vec![("username".to_string(), self.config.username.clone())];
+
+            if let Some(payload) = payload {
+                // Convert payload to form data
+                let payload_str = serde_json::to_string(payload)?;
+                let payload_map: std::collections::HashMap<String, serde_json::Value> = 
+                    serde_json::from_str(&payload_str)?;
+
+                for (key, value) in payload_map {
+                    let value_str = match value {
+                        serde_json::Value::String(s) => s,
+                        serde_json::Value::Number(n) => n.to_string(),
+                        serde_json::Value::Bool(b) => b.to_string(),
+                        _ => serde_json::to_string(&value)?,
+                    };
+                    form_data.push((key, value_str));
+                }
+            }
+
+            request = request.form(&form_data);
         }
-        
-        request = request.form(&form_data);
         
         let response = request.send().await?;
         Ok(response)
+    }
+
+    /// Get the full URL for an endpoint path
+    fn get_url(&self, path: &str) -> String {
+        self.config.build_url(path)
     }
     
     /// Handle the HTTP response
