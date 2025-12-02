@@ -21,6 +21,78 @@ impl Environment {
             Environment::Production => "https://api.africastalking.com",
         }
     }
+
+    /// Get the base domain
+    fn base_domain(&self) -> &'static str {
+        match self {
+            Environment::Sandbox => "sandbox.africastalking.com",
+            Environment::Production => "africastalking.com",
+        }
+    }
+}
+
+/// API endpoints that may use different domains
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Endpoint {
+    /// Standard API endpoints (api domain)
+    Standard,
+    /// Mobile data endpoints (bundles domain)
+    MobileData,
+    /// Voice endpoints (voice domain)
+    Voice,
+    /// Insights endpoints (insights domain)
+    Insights,
+    /// Content endpoints (content domain)
+    Content,
+}
+
+impl Endpoint {
+    /// Get the full URL for this endpoint
+    pub fn build_url(&self, environment: &Environment, path: &str) -> String {
+        let domain = environment.base_domain();
+        match self {
+            Endpoint::Standard => {
+                format!("https://api.{}{}", domain, path)
+            }
+            Endpoint::MobileData => {
+                format!("https://bundles.{}{}", domain, path)
+            }
+            Endpoint::Voice => {
+                format!("https://voice.{}{}", domain, path)
+            }
+            Endpoint::Insights => {
+                format!("https://insights.{}{}", domain, path)
+            }
+            Endpoint::Content => {
+                // Content uses version1 path in sandbox, but is a separate domain in production
+                match environment {
+                    Environment::Sandbox => format!("https://api.{}/version1{}", domain, path),
+                    Environment::Production => format!("https://content.{}/version1{}", domain, path),
+                }
+            }
+        }
+    }
+}
+
+/// Internal mapping of paths to endpoint types
+#[derive(Debug, Clone)]
+struct EndpointMap;
+
+impl EndpointMap {
+    /// Get the endpoint type for a given path
+    fn get(&self, path: &str) -> Endpoint {
+        if path.contains("mobile/data") {
+            Endpoint::MobileData
+        } else if path.contains("voice") {
+            Endpoint::Voice
+        } else if path.contains("insights") {
+            Endpoint::Insights
+        } else if path.contains("content") {
+            Endpoint::Content
+        } else {
+            Endpoint::Standard
+        }
+    }
 }
 
 /// Configuration for the AfricasTalking client
@@ -38,6 +110,8 @@ pub struct Config {
     pub max_retries: u32,
     /// Custom user agent string
     pub user_agent: Option<String>,
+    /// Map of endpoint paths to their endpoint types
+    endpoint_map: EndpointMap,
 }
 
 impl Config {
@@ -50,7 +124,14 @@ impl Config {
             timeout: Duration::from_secs(30),
             max_retries: 3,
             user_agent: None,
+            endpoint_map: EndpointMap,
         }
+    }
+
+    /// Build a full URL for a given endpoint path
+    pub fn build_url(&self, path: &str) -> String {
+        let endpoint = self.endpoint_map.get(path);
+        endpoint.build_url(&self.environment, path)
     }
 
     /// Set the environment
