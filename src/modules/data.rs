@@ -30,7 +30,7 @@ pub struct MobileDataRequest {
     pub recipients: Vec<Recipient>,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, Clone)]
 pub struct RecipientMetadata {
     #[serde(rename = "transactionId")]
     pub transaction_id: String,
