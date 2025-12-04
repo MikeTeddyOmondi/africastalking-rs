@@ -14,7 +14,7 @@ use tokio::time::sleep;
 #[derive(Debug, Clone)]
 pub struct AfricasTalkingClient {
     pub(crate) http_client: HttpClient,
-    pub (crate) config: Config,
+    pub(crate) config: Config,
 }
 
 impl AfricasTalkingClient {
@@ -52,7 +52,7 @@ impl AfricasTalkingClient {
         AirtimeModule::new(self.clone())
     }
 
-    /// Get the Data module
+    // Get the Data Module
     pub fn data(&self) -> DataModule {
         DataModule::new(self.clone())
     }
@@ -141,6 +141,7 @@ impl AfricasTalkingClient {
         T: Serialize,
     {
         let url = self.get_url(endpoint);
+
         let mut request = self.http_client.request(method.clone(), &url);
 
         if use_json {
