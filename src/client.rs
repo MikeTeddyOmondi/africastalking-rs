@@ -14,7 +14,7 @@ use tokio::time::sleep;
 #[derive(Debug, Clone)]
 pub struct AfricasTalkingClient {
     pub(crate) http_client: HttpClient,
-    pub(crate) config: Config,
+    pub (crate) config: Config,
 }
 
 impl AfricasTalkingClient {
@@ -24,7 +24,7 @@ impl AfricasTalkingClient {
 
         let mut headers = HeaderMap::new();
         headers.insert("Accept", "application/json".parse().unwrap());
-        headers.insert("ApiKey", config.api_key.parse().unwrap());
+        headers.insert("apikey", config.api_key.parse().unwrap());
 
         if let Some(user_agent) = &config.user_agent {
             headers.insert("User-Agent", user_agent.parse().unwrap());
@@ -52,7 +52,7 @@ impl AfricasTalkingClient {
         AirtimeModule::new(self.clone())
     }
 
-    // Get the Data Module
+    /// Get the Data module
     pub fn data(&self) -> DataModule {
         DataModule::new(self.clone())
     }

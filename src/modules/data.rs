@@ -1,5 +1,6 @@
+use std::fmt;
+
 use crate::{client::AfricasTalkingClient, error::Result};
-use reqwest::header::{HeaderMap, HeaderValue};
 use serde::{Deserialize, Serialize};
 
 /// SMS module for sending and managing SMS messages
@@ -16,22 +17,7 @@ impl DataModule {
     /// Send SMS to one or more recipients
     pub async fn send(&self, request: MobileDataRequest) -> Result<MobileDataResponseList> {
         // let headers = self.get_data_request_headers();
-        self.client.post("/mobile/data/request", &request).await
-    }
-
-    /**
-     * Get headers for data request API.
-     * @return HeaderMap the headers for the request.
-     */
-    fn get_data_request_headers(&self) -> HeaderMap {
-        let mut headers = HeaderMap::new();
-        headers.insert("Accept", HeaderValue::from_static("application/json"));
-        headers.insert(
-            "apiKey",
-            HeaderValue::from_str(&self.client.config.api_key).unwrap(),
-        );
-        headers.insert("Content-Type", HeaderValue::from_static("application/json"));
-        headers
+        self.client.post_json("/mobile/data/request", &request).await
     }
 }
 
@@ -58,11 +44,32 @@ pub enum DataValidity {
     Month,
 }
 
+impl fmt::Display for DataValidity {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let validity_str = match self {
+            DataValidity::Day => "Day",
+            DataValidity::Week => "Week",
+            DataValidity::Month => "Month",
+        };
+        write!(f, "{}", validity_str)
+    }
+}
+
 // The avaibale data packages/units.
 #[derive(Debug, Serialize, Deserialize)]
 pub enum DataUnits {
     MB,
     GB,
+}
+
+impl fmt::Display for DataUnits {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let unit_str = match self {
+            DataUnits::MB => "MB",
+            DataUnits::GB => "GB",
+        };
+        write!(f, "{}", unit_str)
+    }
 }
 
 #[derive(Debug, Serialize)]
