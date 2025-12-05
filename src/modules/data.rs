@@ -17,7 +17,17 @@ impl DataModule {
     /// Send SMS to one or more recipients
     pub async fn send(&self, request: MobileDataRequest) -> Result<MobileDataResponseList> {
         // let headers = self.get_data_request_headers();
-        self.client.post_json("/mobile/data/request", &request).await
+        self.client
+            .post_json("/mobile/data/request", &request)
+            .await
+    }
+
+    // Query a data transaction by its ID
+    pub async fn find_transaction(&self, transaction_id: String) -> Result<FindTransactionResponse> {
+        let user_name = self.client.config.username.clone();
+        let endpoint =
+            format!("/query/transaction/find?username={user_name}&transactionId={transaction_id}");
+        self.client.get(&endpoint).await
     }
 }
 
@@ -111,4 +121,55 @@ pub struct MobileDataResponseList {
     pub entries: Vec<MobileDataResponse>,
     #[serde(rename = "errorMessage", skip_serializing_if = "Option::is_none")]
     pub error_message: Option<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct FindTransactionResponse {
+    pub status: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub data: Option<MobileDataResponse>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct FindTrandactionResponseData {
+    #[serde(rename = "requestMetadata")]
+    pub request_metadata: FindTrandactionResponseRequestMetadata,
+    #[serde(rename = "sourceType")]
+    pub source_type: String,
+    pub source: String,
+    pub provider: String,
+    #[serde(rename = "destinationType")]
+    pub destination_type: String,
+    pub description: String,
+    #[serde(rename = "providerChannel")]
+    pub provider_channel: String,
+    #[serde(rename = "transactionFee")]
+    pub transaction_fee: String,
+    #[serde(rename = "providerMetadata")]
+    pub provider_metadata: FindTrandactionResponseProviderMetadata,
+    pub stratus: String,
+    #[serde(rename = "productName")]
+    pub product_name: String,
+    pub category: String,
+    #[serde(rename = "transactionDate")]
+    pub transaction_date: String,
+    pub destination: String,
+    pub value: String,
+    #[serde(rename = "transactionId")]
+    pub transaction_id: String,
+    #[serde(rename = "creationTime")]
+    pub creation_time: String,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct FindTrandactionResponseRequestMetadata {
+    pub reason: String,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct FindTrandactionResponseProviderMetadata {
+    #[serde(rename = "recipientRegistred")]
+    pub recipient_registred: String,
+    #[serde(rename = "recipientName")]
+    pub recipient_name: String,
 }

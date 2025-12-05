@@ -2,9 +2,13 @@ use africastalking::data::{
     DataUnits, DataValidity, MobileDataRequest, Recipient, RecipientMetadata,
 };
 use africastalking::{AfricasTalkingClient, AfricasTalkingError, Config, Environment, Result};
+use uuid::Uuid;
 
 #[tokio::main]
 async fn main() -> Result<()> {
+    // to be used as transation id metadata
+    let random_string = Uuid::new_v4();
+
     // Load .env (ignoring “file not found” errors)
     dotenvy::dotenv().ok();
 
@@ -23,7 +27,7 @@ async fn main() -> Result<()> {
     let data = client.data();
 
     let receipient_metadata = RecipientMetadata {
-        transaction_id: "txn_1234d2232dfsdrwrewr2e2356".to_string(),
+        transaction_id: random_string.to_string(),
     };
 
     let recipient = Recipient {
@@ -42,6 +46,14 @@ async fn main() -> Result<()> {
     };
 
     let send_data_response = data.send(request).await?;
-    println!("{send_data_response:#?}");
+    println!("Send data response: {send_data_response:#?}");
+
+    // query/find transaction.
+    let transaction = client
+        .data()
+        .find_transaction("ATPid_b9379b671fee8ccf24b2c74f94da0ceb".to_string())
+        .await?;
+
+    println!("Queried transaction : {transaction:#?}");
     Ok(())
 }
