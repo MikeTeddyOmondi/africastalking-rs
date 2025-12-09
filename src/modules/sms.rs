@@ -1,7 +1,6 @@
 //! SMS module implementation
 
 use crate::{client::AfricasTalkingClient, error::Result};
-use reqwest::header::HeaderMap;
 use serde::{Deserialize, Serialize};
 
 /// SMS module for sending and managing SMS messages
