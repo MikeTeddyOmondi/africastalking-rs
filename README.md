@@ -43,6 +43,7 @@ This SDK is based on the AfricasTalking official developers API. Click the resou
 ## Maintainer(s)/Contributor(s)
 
 1. [MikeTeddyOmondi](https://github.com/MikeTeddyOmondi)
+1. [allen-Muhani](https://github.com/Allen-Muhani)
 
 ## License
 
