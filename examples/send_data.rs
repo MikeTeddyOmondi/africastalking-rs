@@ -55,5 +55,8 @@ async fn main() -> Result<()> {
         .await?;
 
     println!("Queried transaction : {transaction:#?}");
+
+    let wallet_balance = client.data().query_wallet_balance().await?;
+    println!("Wallet balance : {wallet_balance:#?}");
     Ok(())
 }

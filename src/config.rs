@@ -81,7 +81,7 @@ struct EndpointMap;
 impl EndpointMap {
     /// Get the endpoint type for a given path
     fn get(&self, path: &str) -> Endpoint {
-        if path.contains("mobile/data") {
+        if path.contains("mobile/data") || path.contains("query/transaction") || path.contains("query/wallet") {
             Endpoint::MobileData
         } else if path.contains("voice") {
             Endpoint::Voice
