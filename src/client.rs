@@ -65,7 +65,6 @@ impl AfricasTalkingClient {
     // Add more modules as they're implemented
     // pub fn voice(&self) -> VoiceModule { ... }
     // pub fn payments(&self) -> PaymentsModule { ... }
-    // pub fn data(&self) -> DataModule { ... }
 
     /// Make a POST request with form encoding (default for most endpoints)
     pub(crate) async fn post<T, R>(&self, endpoint: &str, payload: &T) -> Result<R>
