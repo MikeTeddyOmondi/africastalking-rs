@@ -23,10 +23,20 @@ impl DataModule {
     }
 
     // Query a data transaction by its ID
-    pub async fn find_transaction(&self, transaction_id: String) -> Result<FindTransactionResponse> {
+    pub async fn find_transaction(
+        &self,
+        transaction_id: String,
+    ) -> Result<FindTransactionResponse> {
         let user_name = self.client.config.username.clone();
         let endpoint =
             format!("/query/transaction/find?username={user_name}&transactionId={transaction_id}");
+        self.client.get(&endpoint).await
+    }
+
+    // Query wallet balance
+    pub async fn query_wallet_balance(&self) -> Result<QueryWalletBalanceResponce> {
+        let user_name = self.client.config.username.clone();
+        let endpoint = format!("/query/wallet/balance?username={user_name}");
         self.client.get(&endpoint).await
     }
 }
@@ -172,4 +182,13 @@ pub struct FindTrandactionResponseProviderMetadata {
     pub recipient_registred: String,
     #[serde(rename = "recipientName")]
     pub recipient_name: String,
+}
+
+// Wallet balance response structure
+#[derive(Debug, Serialize, Deserialize)]
+pub struct QueryWalletBalanceResponce {
+    pub status: String,
+    pub balance: String,
+    #[serde(rename = "errorMessage")]
+    pub error_message: Option<String>,
 }
