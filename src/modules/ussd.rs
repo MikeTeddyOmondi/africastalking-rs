@@ -9,7 +9,7 @@
 //!
 //! ```no_run
 //! use axum::{Router, routing::post, Json, response::IntoResponse};
-//! use africastalking_rs::ussd::{UssdRequest, UssdResponse, UssdMenu};
+//! use africastalking::ussd::{UssdRequest, UssdResponse, UssdMenu};
 //!
 //! async fn handle_ussd(Json(payload): Json<UssdRequest>) -> impl IntoResponse {
 //!     let response = match payload.text.as_str() {
@@ -177,7 +177,7 @@ impl fmt::Display for UssdResponse {
 /// # Examples
 ///
 /// ```
-/// use africastalking_rs::ussd::UssdMenu;
+/// use africastalking::ussd::UssdMenu;
 ///
 /// let menu = UssdMenu::new("What would you like to check?")
 ///     .add_option("1", "My account")
