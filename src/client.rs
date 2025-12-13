@@ -62,8 +62,12 @@ impl AfricasTalkingClient {
         ApplicationModule::new(self.clone())
     }
 
+    /// Get the Voice module
+    pub fn voice(&self) -> VoiceModule { 
+        VoiceModule::new(self.clone())
+     }
+
     // Add more modules as they're implemented
-    // pub fn voice(&self) -> VoiceModule { ... }
     // pub fn payments(&self) -> PaymentsModule { ... }
 
     /// Make a POST request with form encoding (default for most endpoints)
