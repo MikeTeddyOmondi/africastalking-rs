@@ -30,12 +30,12 @@ This SDK is based on the AfricasTalking official developers API. Click the resou
 
 ## Roadmap
 
-- [ ] Request Client
-- [ ] AfricasTalking
-- [ ] SMS
-- [ ] USSD
+- [x] Request Client
+- [x] AfricasTalking
+- [x] SMS
+- [x] USSD
 - [ ] Voice
-- [ ] Mobile Data 
+- [x] Mobile Data 
 - [ ] Chat
 - [ ] Payments
 - [ ] Insights
