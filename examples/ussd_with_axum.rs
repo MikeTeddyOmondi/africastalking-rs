@@ -21,8 +21,8 @@ async fn main() {
     let state = Arc::new(AppState {});
 
     let app = Router::new()
-        .route("/ussd", post(handle_ussd))
-        .route("/ussd/notify", post(handle_ussd_notification))
+        .route("/api/v1/ussd", post(handle_ussd))
+        .route("/api/v1/ussd/notify", post(handle_ussd_notification))
         .with_state(state);
 
     let listener = TcpListener::bind("0.0.0.0:4949").await.unwrap();

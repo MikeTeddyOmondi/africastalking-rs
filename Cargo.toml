@@ -22,3 +22,4 @@ uuid = { version = "1.19.0", features = ["v4"] }
 axum = "0.8.7"
 actix-web = "4.12.1"
 rocket = { version = "0.5.1", features = ["json"] }
+mongodb = "3.3.0"
